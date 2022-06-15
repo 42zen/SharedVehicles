@@ -7,7 +7,10 @@ import sharedmobility
 from tools import speech
 from tools import adb
 
+
+# set the settings
 TARGET_FILENAME = 'vehicle.target'
+
 
 def select_target(target):
     # open the target file

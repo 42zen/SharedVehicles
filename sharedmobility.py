@@ -1,4 +1,5 @@
 # import the python libraries needed
+import threading
 import geopy.distance
 
 # import the scrappers libraries needed
@@ -11,8 +12,11 @@ from scrappers import tier
 from scrappers import voi
 #from scrappers import dott
 
-# set the settings variable
+# set the settings
 DEBUG_SCAN = True
+
+# set the global variables
+closest_vehicles = {}
 
 # build the services list
 services_list = [
@@ -61,7 +65,7 @@ def get_closest_vehicle_for_service(service, lat, lng):
     if vehicles != []:
         vehicles.sort(key=sort_by_distance)
         if DEBUG_SCAN == True:
-            print("%s: ==> %.0f meters." % (vehicles[0]['brand'], vehicles[0]['distance']))
+            print("%s: %.0f meters." % (vehicles[0]['brand'], vehicles[0]['distance']))
         return vehicles[0]
     
     # no vehicle found
@@ -69,16 +73,41 @@ def get_closest_vehicle_for_service(service, lat, lng):
         print("%s: No vehicles close to you." % service['name'])
     return None
 
+class ClosestVehicleThread(threading.Thread):
+    def __init__(self, func, service, lat, lng):
+        threading.Thread.__init__(self)
+        self.func = func
+        self.service = service
+        self.lat = lat
+        self.lng = lng
+    def run(self):
+        global closest_vehicles
+        closest_vehicles[self.service['name']] = self.func(self.service, self.lat, self.lng)
+
 # get the closest vehicle from all services
 def get_closest_vehicle(lat, lng):
-    # TODO: use multithreading
+    global closest_vehicles
 
-    # set the default closest vehicle
-    closest_vehicle = None
-
-    # find the closest vehicle from services list
+    # build the threads list
+    threads_list = {}
     for service in services_list:
-        service_closest_vehicle = get_closest_vehicle_for_service(service, lat, lng)
+        threads_list[service['name']] = ClosestVehicleThread(get_closest_vehicle_for_service, service, lat, lng)
+
+    # start the threads
+    for service in services_list:
+        t = threads_list[service['name']]
+        result = t.start()
+
+    # wait for each threads to finish
+    closest_vehicles = {}
+    for service in services_list:
+        t = threads_list[service['name']]
+        t.join()
+
+    # find the closest vehicle
+    closest_vehicle = None
+    for service in services_list:
+        service_closest_vehicle = closest_vehicles[service['name']]
         if service_closest_vehicle != None:
             if closest_vehicle == None or service_closest_vehicle['distance'] < closest_vehicle['distance']:
                 closest_vehicle = service_closest_vehicle
