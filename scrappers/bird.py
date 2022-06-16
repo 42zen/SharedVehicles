@@ -31,7 +31,7 @@ class api:
     """
     Send a request to the API
     """
-    def request(endpoint, json_data=None, auth=None, api='bird', params=None, lat=None, lng=None, device_id=DEVICE_ID):
+    def request(endpoint, json_data=None, token=None, api='bird', params=None, lat=None, lng=None, device_id=DEVICE_ID):
         # build the hostname
         host = f'api-{api}.{API_HOST}'
 
@@ -63,8 +63,8 @@ class api:
         }
 
         # add the auth header if needed
-        if auth != None:
-            headers['Authorization'] = f'Bearer {auth}'
+        if token != None:
+            headers['Authorization'] = f'Bearer {token}'
 
         # add the location header if needed
         if api == 'bird':
@@ -88,7 +88,7 @@ class api:
     """
     Get the shared vehicles list
     """
-    def get_vehicles(lat, lng, tokens, radius=5000.0):
+    def get_vehicles(lat, lng, access_token, radius=5000.0):
         # build the params
         params = {
             'latitude': lat,
@@ -97,7 +97,7 @@ class api:
         }
 
         # send the request
-        response = api.request('nearby', params=params, auth=tokens, lat=lat, lng=lng)
+        response = api.request('nearby', params=params, token=access_token, lat=lat, lng=lng)
 
         # return the response
         return response
@@ -161,7 +161,7 @@ class auth_api:
     """
     def refresh_tokens(refresh_token):
         # send the request
-        response = api.request('refresh/token', auth=refresh_token, api='auth')
+        response = api.request('refresh/token', token=refresh_token, api='auth')
 
         # check the response status code
         if response.status_code != 200:
@@ -213,6 +213,11 @@ class auth_api:
 
         # there is no tokens to load
         return None
+
+
+"""
+A class to manage analytics
+"""
 
 
 """

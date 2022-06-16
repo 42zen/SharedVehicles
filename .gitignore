@@ -3,8 +3,10 @@ exploits/
 samples/
 scripts/
 tokens/
+TODO
 IDEAS
 __pycache__/
+api/__pycache__/
 scrappers/__pycache__/
 tools/__pycache__/
 speech.mp3
