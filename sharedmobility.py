@@ -15,9 +15,6 @@ from scrappers import voi
 # set the settings
 DEBUG_SCAN = True
 
-# set the global variables
-closest_vehicles = {}
-
 # build the services list
 services_list = [
     {
@@ -73,6 +70,8 @@ def get_closest_vehicle_for_service(service, lat, lng):
         print("%s: No vehicles close to you." % service['name'])
     return None
 
+# create the ClosestVehicleThread class
+closest_vehicles = {}
 class ClosestVehicleThread(threading.Thread):
     def __init__(self, func, service, lat, lng):
         threading.Thread.__init__(self)

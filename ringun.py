@@ -2,6 +2,7 @@
 import os
 import json
 import sharedmobility
+import struct
 
 # import the tools libraries needed
 from tools import speech
@@ -112,6 +113,22 @@ def main():
     #    1) A proxy file: adb.shell('cat /dev/input > /sdcard/input')
     #    2) Simple input reading from sdcard
     #   When input: scan() scan or shot().
+    process = os.popen('C:/Programs/AndroidDebugBridge/adb.exe shell cat /dev/input/event2')
+    
+    while True:
+        process.read(8)
+        type = int(process.read(1))
+        type = type * 255 + int(process.read(1))
+        code = int(process.read(1))
+        code = code * 255 + int(process.read(1))
+        value = int(process.read(4))
+        if type != 0 or code != 0 or value != 0:
+            print("Event type %u, code %i." % (type, code))
+        else:
+            print("===========================================")
+        break
+    process.close()
     pass
 
-scan()
+main()
+
