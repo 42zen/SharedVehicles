@@ -1,7 +1,9 @@
-from pickletools import read_unicodestring1
+#from pickletools import read_unicodestring1
 import requests
 import json
 import random
+import datetime
+import geopy.distance
 
 APP_NAME = 'bird'
 APP_TYPE = 'rider'
@@ -17,6 +19,10 @@ DEVICE_ARCH = 'generic_x86_arm'
 class api:
 
     class request:
+        def build_timestamp():
+            timestamp = datetime.datetime.utcnow().isoformat()
+            return timestamp[:timestamp.find('.') + 1] + '000+02:00'
+
         def build_random_device_id():
             charset = "0123456789abcdef"
             device_id = ''
@@ -36,7 +42,7 @@ class api:
                     "mocked": mocked,
                     "source": source,
                     "speed": speed,
-                    #"timestamp": "2022-06-16T10:41:14.000+02:00" # TODO
+                    "timestamp": api.request.build_timestamp()
             }
             return location
 
@@ -48,7 +54,7 @@ class api:
                 'Battery-Level': '100',
                 'Bluetooth-State': 'disabled',
                 'Carrier-Name': DEVICE_OS,
-                #'Client-Time': '2022-06-16T10:41:14.910+02:00', # TODO
+                'Client-Time': api.request.build_timestamp(),
                 'Connection-Type': 'unknown',
                 'Device-Model': DEVICE_MODEL,
                 'Device-Name': DEVICE_ARCH,
@@ -91,6 +97,8 @@ class api:
         def put(api_name, endpoint, params=None, json_data=None, token=None, device_id=None, lat=None, lng=None):
             return api.request.request(api_name, endpoint, params=params, json_data=json_data, req=requests.put, token=token, device_id=device_id, lat=lat, lng=lng)
 
+    # this class is useless
+    '''
     class analytics:
         def post(endpoint, json_data):
             return api.request.post('analytics', f'analytics/{endpoint}', json_data=json_data)
@@ -104,6 +112,7 @@ class api:
             json_data = { 'events': events }
             response = api.analytics.post('analytics', 'track-events', json_data=json_data)
             return json.loads(response.content)
+    '''
 
     class auth:
         def post(endpoint, json_data=None, refresh_token=None, device_id=None):
@@ -313,11 +322,9 @@ class api:
             return json.loads(response.content)
 
         def ota_pull(project_id, modified_after=None, access_token=None, device_id=None):
-            # TODO: if modified_after == None: modified_after = current_time
-            # modified_after sample: '2022-05-14T00:00:06.754+02:00'
-            params = { 'bird_project_id': project_id }
-            if modified_after != None:
-                params['modified_after'] = modified_after
+            if modified_after == None:
+                modified_after = api.request.build_timestamp()
+            params = { 'bird_project_id': project_id, 'modified_after': modified_after }
             return api.localization.get('ota/pull', params, access_token=access_token, device_id=device_id)
 
     class rider:
@@ -395,7 +402,8 @@ class Session:
         self.tokens_filename = None
         if tokens_filename != None:
             self.set_tokens_filename(tokens_filename)
-            self.tokens = self.load_tokens_file()
+            if self.load_tokens_file() == False:
+                print("Bird: Warning: Session.__init__: Couldn't read '%s' tokens file." % tokens_filename)
         if device_id == None:
             device_id = api.request.build_random_device_id()
         self.device_id = device_id
@@ -413,7 +421,7 @@ class Session:
     def register(self, email):
         response = api.auth.get_tokens_from_email(email, device_id=self.device_id)
         if 'validation_required' not in response:
-            print("Error: Bird: Session.register: api.auth.get_tokens_from_email returned", response)
+            print("Bird: Error: Session.register: api.auth.get_tokens_from_email returned", response)
             return False
         if response['validation_required'] == False:
             self.set_tokens(response['tokens'])
@@ -423,26 +431,30 @@ class Session:
     def send_email_code(self, email):
         response = api.auth.get_tokens_from_email(email, device_id=self.device_id)
         if 'validation_required' not in response:
-            print("Error: Bird: Session.login_from_email: api.auth.get_tokens_from_email returned", response)
+            print("Bird: Error: Session.login_from_email: api.auth.get_tokens_from_email returned", response)
             return False
         if response['validation_required'] == False:
             self.set_tokens(response['tokens'])
-            print("Warning: Bird: Session.login_from_email: You just created an account for", email)
+            print("Bird: Warning: Session.login_from_email: You just created an account for", email)
             return False
         return True
 
     def login_from_email_code(self, code):
         response = api.auth.get_tokens_from_email_verification(code, device_id=self.device_id)
         if 'access' not in response:
-            print("Error: Bird: Session.login_from_email_code: api.auth.get_tokens_from_email_verification returned", response)
+            print("Bird: Error: Session.login_from_email_code: api.auth.get_tokens_from_email_verification returned", response)
             return False
         self.set_tokens(response)
         return True
 
     def refresh_tokens(self):
-        response = api.auth.get_tokens_from_refresh_token(self.tokens['refresh'], device_id=self.device_id)
+        if self.tokens == None:
+            print("Bird: Warning: Session.refresh_tokens: You can't refresh tokens without initial token.")
+            return False
+        refresh_token = self.tokens['refresh']
+        response = api.auth.get_tokens_from_refresh_token(refresh_token, device_id=self.device_id)
         if 'access' not in response:
-            print("Error: Bird: Session.refresh_session: api.auth.get_tokens_from_refresh_token returned", response)
+            print("Bird: Error: Session.refresh_session: api.auth.get_tokens_from_refresh_token returned", response)
             return False
         self.set_tokens(response)
         return True
@@ -459,4 +471,40 @@ class Session:
         self.refresh_tokens()
         return True
 
-    # TODO: def vehicles_nearby(lat, lng, radius=300.0, max_vehicles=None):
+    def sort_vehicles_by_distance(self, vehicle):
+        return vehicle['distance']
+
+    def get_vehicles_nearby(self, lat=None, lng=None, radius=300.0, max_vehicles=None):
+        if self.tokens == None:
+            print("Bird: Warning: Session.get_vehicles_nearby: You can't get vehicles nearby without access token.")
+            return False
+        if lat != None and lng != None:
+            self.set_position(lat, lng)
+        response = api.bird.get_bird_nearby(self.lat, self.lng, access_token=self.tokens['access'], device_id=self.device_id)
+        if 'birds' not in response:
+            if 'code' not in response:
+                print("Bird: Error: Session.vehicles_nearby: api.bird.get_bird_nearby returned", response)
+                return None
+            if response['code'] == 401:
+                self.refresh_tokens()
+                return self.get_vehicles_nearby(lat=lat, lng=lng, radius=radius, max_vehicles=max_vehicles)
+            print("Bird: Error: Session.vehicles_nearby: unknown error code", response['code'], ':', response)
+            return None
+        vehicles_list = []
+        for infos in response['birds']:
+            distance = geopy.distance.geodesic((infos['location']['latitude'], infos['location']['longitude']), (self.lat, self.lng)).m
+            if distance > radius:
+                continue
+            vehicles_list += [ {
+                'infos': infos,
+                'distance': distance
+            } ]
+        vehicles_list.sort(key=self.sort_vehicles_by_distance)
+        if max_vehicles != None and len(vehicles_list) > max_vehicles:
+            vehicles_list = vehicles_list[:max_vehicles]
+        return vehicles_list
+
+sess = Session(lat=50.846885386381636, lng=4.357265272965748, tokens_filename='test.tokens')
+vehicles_list = sess.get_vehicles_nearby(radius=20.0)
+print(len(vehicles_list))
+
