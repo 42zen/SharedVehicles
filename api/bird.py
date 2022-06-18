@@ -1,5 +1,7 @@
+from pickletools import read_unicodestring1
 import requests
 import json
+import random
 
 APP_NAME = 'bird'
 APP_TYPE = 'rider'
@@ -14,70 +16,35 @@ DEVICE_ARCH = 'generic_x86_arm'
 
 class api:
 
-    access_token =  'Bearer eyJhbGciOiJSUzUxMiJ9.eyJqdGkiOiI4YTA2MDJlZS00ZDg3LTQ2ZjItYjg1Ni0xMG' \
-                    'NlM2M5OTFiMGUiLCJzdWIiOiJmODhiNzIxOS1kODk5LTQxOGYtODMzZi05M2E0MGJiZDQyMzMi' \
-                    'LCJuYmYiOjE2NTUzNjczNDIsImV4cCI6MTY1NTQ1Mzc0MiwiYXVkIjoiYmlyZC5zZXJ2aWNlcy' \
-                    'IsImlzcyI6ImJpcmQuYXV0aCIsImlhdCI6MTY1NTM2NzM0Miwicm9sZXMiOlsiVVNFUiJdLCJh' \
-                    'cHAiOiI3YjhlZDk1NS02ZTNhLTRlZWMtYmEyMC04OGFmOWQ3YWVhNzYiLCJ2ZXIiOiIwLjAuMi' \
-                    'J9.BPNlT6yn7NtWsKe9NSJD4nDmYDjU0e0sB1HRX_i0GoRtRv9vlr0azra4R_u6xTifTpfFuC_' \
-                    'Eyz2W248duTpPR7PoQ2P65MzQzrLz7Ko7P-BYHRxbrWJreAk-3KV_GQrcSPyHITwokeS5WlzfE' \
-                    'hW8gPymdGWozCYw0D6kaTzZ0pn8oNxxHmwzJiQMQHyDfRpMbBStDLyIOtWVd4Lur2zeXm_4y9r' \
-                    '3acs6CP6E1CkUjg2qUfeS6-dffhw13TpXiMSP9sfd2M0b4gMjszztDY3rELLQIjEuQxVdKwNYn' \
-                    '8fTzdYTeh_TdJInA05nBNq3xkAS-fePNy7fMn-kd6fFcM6g9neM4WQc8u9yTjRcMFLCKTny9qo' \
-                    '7JpgmpoqYwd4bzpy-LSHFzbk5VMYTLaT63aZbTBTr2nnzCJgIBouSLGvAf_omeaxn1HUoY-9Ll' \
-                    'h3okBSwZsjDwQG2UrWPrdAccjAkDypJgBzrmWldGeyr9iQLzYkhKTRMKCQotvAuaQdXi3FV9YY' \
-                    'wF8I2SgHzZuX2TeI2u3vfdZZOCG-XC5n0iz7zATa8Xn7C27bFLUOkTulA2PM62R9pDYW6rB3sN' \
-                    'QSxlyIdqqZWS7lpTEcjal7cRdE6ShZHVTxKLOj4_kfdQWJW0kHx1HN7ueXaACCfgQYu5WvnPxA' \
-                    'eQqDE-h20mA0_Jhcz0go'
-
-    device_id = '5f0f6ad45d14c714'
-
-    lat = 0.0
-    lng = 0.0
-
-    loc_accuracy = 20.0
-    loc_altitude = 0.0
-    loc_heading = None
-    loc_mocked = False
-    loc_source = "gps"
-    loc_speed = 0.0
-
-    def set_access_token(access_token):
-        api.access_token = access_token
-
-    def set_device_id(device_id):
-        api.device_id = device_id
-
-    def set_position(lat, lng):
-        api.lat = lat
-        api.lng = lng
-
-    def set_location(accuracy=20.048999786376953, altitude=0.0, heading=None, mocked=False, source="gps", speed=0.0):
-        api.loc_accuracy = accuracy
-        api.loc_altitude = altitude
-        api.loc_heading = heading
-        api.loc_mocked = mocked
-        api.loc_source = source
-        api.loc_speed = speed
-
     class request:
-        def build_headers(api_name):
+        def build_random_device_id():
+            charset = "0123456789abcdef"
+            device_id = ''
+            for i in range(0, 15):
+                r = random.randint(0, 15)
+                a = charset[r]
+                device_id += a
+            return device_id
+
+        def build_location(lat, lng, accuracy=20.048999786376953, altitude=0.0, heading=None, mocked=False, source="gps", speed=0.0):
             location = {
-                    "accuracy": api.loc_accuracy,
-                    "altitude": api.loc_altitude,
-                    "heading": api.loc_heading,
-                    "latitude": api.lat,
-                    "longitude": api.lng,
-                    "mocked": api.loc_mocked,
-                    "source": api.loc_source,
-                    "speed": api.loc_speed,
+                    "accuracy": accuracy,
+                    "altitude": altitude,
+                    "heading": heading,
+                    "latitude": lat,
+                    "longitude": lng,
+                    "mocked": mocked,
+                    "source": source,
+                    "speed": speed,
                     #"timestamp": "2022-06-16T10:41:14.000+02:00" # TODO
             }
+            return location
+
+        def build_headers(api_name, location, token=None, device_id=None):
             headers = {
                 'Host': f'api-{api_name}.prod.birdapp.com',
                 'App-Version': APP_VERSION,
                 'Accept-Language': f'{DEVICE_LANG}-{DEVICE_REGION},{DEVICE_LANG}',
-                'Bird-Device-Id': api.device_id,
                 'Battery-Level': '100',
                 'Bluetooth-State': 'disabled',
                 'Carrier-Name': DEVICE_OS,
@@ -87,34 +54,42 @@ class api:
                 'Device-Name': DEVICE_ARCH,
                 'Device-Region': DEVICE_REGION,
                 'Device-Language': DEVICE_LANG,
-                'Device-Id': api.device_id,
-                'Location': json.dumps(location, separators=(',', ':')),
                 'Mobile-Network-Generation': 'unknown',
                 'Os-Version': DEVICE_OS_VERSION,
                 'Platform': DEVICE_OS.lower(),
                 'User-Agent': f'{DEVICE_OS} - {DEVICE_OS_VERSION}',
                 'App-Name': APP_NAME,
                 'App-Type': APP_TYPE,
-                'Authorization': api.access_token,
                 'Content-Type': 'application/json; charset=UTF-8'
             }
+            if location != None:
+                headers['Location'] = json.dumps(location, separators=(',', ':'))
+            if device_id == None:
+                device_id = api.request.build_random_device_id()
+            headers['Device-Id'] = device_id
+            headers['Bird-Device-Id'] = device_id
+            if token != None:
+                headers['Authorization'] = 'Bearer ' + token
             return headers
 
-        def request(api_name, endpoint, params=None, json_data=None, req=requests.get):
-            headers = api.request.build_headers(api_name)
+        def request(api_name, endpoint, lat=None, lng=None, params=None, json_data=None, req=requests.get, token=None, device_id=None):
+            location = None
+            if lat != None and lng != None:
+                location = api.request.build_location(lat, lng)
+            headers = api.request.build_headers(api_name, location, token=token, device_id=device_id)
             url = f'https://api-{api_name}.prod.birdapp.com/{endpoint}'
             if req != requests.get:
-                return req(url, headers=headers, params=params, json_data=json_data)
+                return req(url, headers=headers, params=params, json=json_data)
             return req(url, headers=headers, params=params)
 
-        def get(api_name, endpoint, params=None):
-            return api.request.request(api_name, endpoint, params=params)
+        def get(api_name, endpoint, params=None, token=None, device_id=None, lat=None, lng=None):
+            return api.request.request(api_name, endpoint, params=params, token=token, device_id=device_id, lat=lat, lng=lng)
 
-        def post(api_name, endpoint, params=None, json_data=None):
-            return api.request.request(api_name, endpoint, params=params, json_data=json_data, req=requests.post)
+        def post(api_name, endpoint, params=None, json_data=None, token=None, device_id=None, lat=None, lng=None):
+            return api.request.request(api_name, endpoint, params=params, json_data=json_data, req=requests.post, token=token, device_id=device_id, lat=lat, lng=lng)
 
-        def put(api_name, endpoint, params=None, json_data=None):
-            return api.request.request(api_name, endpoint, params=params, json_data=json_data, req=requests.put)
+        def put(api_name, endpoint, params=None, json_data=None, token=None, device_id=None, lat=None, lng=None):
+            return api.request.request(api_name, endpoint, params=params, json_data=json_data, req=requests.put, token=token, device_id=device_id, lat=lat, lng=lng)
 
     class analytics:
         def post(endpoint, json_data):
@@ -131,137 +106,139 @@ class api:
             return json.loads(response.content)
 
     class auth:
-        def post(endpoint, json_data=None):
-            response = api.request.post('auth', f'api/v1/auth/{endpoint}', json_data=json_data)
+        def post(endpoint, json_data=None, refresh_token=None, device_id=None):
+            response = api.request.post('auth', f'api/v1/auth/{endpoint}', json_data=json_data, token=refresh_token, device_id=device_id)
             return json.loads(response.content)
 
-        def get_tokens_from_email(email):
+        def get_tokens_from_email(email, device_id=None):
             json_data = { 'email': email }
-            return api.auth.post('email', json_data=json_data)
+            response = api.auth.post('email', json_data=json_data, device_id=device_id)
+            return response
 
-        def get_tokens_from_email_verification(code):
+        def get_tokens_from_email_verification(code, device_id=None):
             json_data = { 'token': code }
-            return api.auth.post('magic-link/use', json_data=json_data)
+            response = api.auth.post('magic-link/use', json_data=json_data, device_id=device_id)
+            return response
 
-        def get_tokens_from_refresh_token(code):
-            return api.auth.post('refresh/token')
+        def get_tokens_from_refresh_token(refresh_token, device_id=None):
+            return api.auth.post('refresh/token', refresh_token=refresh_token, device_id=device_id)
 
     class bird:
-        def get(endpoint, params=None):
-            response = api.request.get('bird', endpoint, params=params)
+        def get(endpoint, params=None, access_token=None, device_id=None, lat=None, lng=None):
+            response = api.request.get('bird', endpoint, params=params, token=access_token, device_id=device_id, lat=lat, lng=lng)
             return json.loads(response.content)
 
-        def put(endpoint, json_data=None, params=None):
-            response = api.request.put('bird', endpoint, json_data=json_data)
+        def put(endpoint, json_data=None, params=None, access_token=None, device_id=None, lat=None, lng=None):
+            response = api.request.put('bird', endpoint, json_data=json_data, token=access_token, device_id=device_id, lat=lat, lng=lng)
             return json.loads(response.content)
 
-        def post(endpoint, json_data=None):
-            response = api.request.post('bird', endpoint, json_data=json_data)
+        def post(endpoint, json_data=None, access_token=None, device_id=None, lat=None, lng=None):
+            response = api.request.post('bird', endpoint, json_data=json_data, token=access_token, device_id=device_id, lat=lat, lng=lng)
             return json.loads(response.content)
 
-        def get_alerts():
-            return api.bird.get('alerts')
+        def get_alerts(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('alerts', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_announcements():
-            return api.bird.get('announcements')
+        def get_announcements(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('announcements', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_area_nearby(lat, lng, radius='5000.0', include_merged=True):
+        def get_area_nearby(lat, lng, radius=5000.0, include_merged=True, access_token=None, device_id=None):
             params = {
                 'latitude': lat,
                 'longitude': lng,
                 'radius': radius,
                 'include_merged': include_merged
             }
-            return api.bird.get('area/nearby', params=params)
+            return api.bird.get('area/nearby', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def set_bird_chirp(bird_id, alarm=False):
+        def set_bird_chirp(bird_id, alarm=False, access_token=None, device_id=None, lat=None, lng=None):
             json_data = {
                 'alarm': alarm,
                 'bird_id': bird_id
             }
-            return api.bird.put('bird/chirp', json_data=json_data)
+            return api.bird.put('bird/chirp', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def set_bird_missing(bird_id, request_role='rider'):
+        def set_bird_missing(bird_id, request_role='rider', access_token=None, device_id=None, lat=None, lng=None):
             json_data = {
                 'bird_id': bird_id,
                 'request_role': request_role
             }
-            return api.bird.put('bird/missing', json_data=json_data)
+            return api.bird.put('bird/missing', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_bird_nearby(lat, lng, radius=5000.0):
+        def get_bird_nearby(lat, lng, radius=5000.0, access_token=None, device_id=None):
             params = {
                 'latitude': lat,
                 'longitude': lng,
                 'radius': radius
             }
-            return api.bird.get('bird/nearby', params=params)
+            return api.bird.get('bird/nearby', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def is_communication_opted_in():
-            return api.bird.get('communication-opt-in/is-opted-in')
+        def is_communication_opted_in(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('communication-opt-in/is-opted-in', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_complaint_schema(type='community'):
+        def get_complaint_schema(type='community', access_token=None, device_id=None, lat=None, lng=None):
             params = { 'type': type }
-            return api.bird.get('complaint/schema', params=params)
+            return api.bird.get('complaint/schema', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_config():
-            return api.bird.get('config')
+        def get_config(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('config', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_contractor_available_apps():
-            return api.bird.get('contractor/available-applications')
+        def get_contractor_available_apps(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('contractor/available-applications', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def set_next_contractor_onboard_steps(contractor_level=None, country='US', fields={}, root_field_id=None):
+        def set_next_contractor_onboard_steps(contractor_level=None, country='US', fields={}, root_field_id=None, access_token=None, device_id=None, lat=None, lng=None):
             json_data = {
                 'contractor_level': contractor_level,
                 'country': country,
                 'fields': fields,
                 'root_field_id': root_field_id,
             }
-            return api.bird.post('contractor/onboard-steps/next', json_data=json_data)
+            return api.bird.post('contractor/onboard-steps/next', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_coupon(redeemed=False):
+        def get_coupon(redeemed=False, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'redeemed': redeemed }
-            return api.bird.get('coupon', params=params)
+            return api.bird.get('coupon', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_coupon_promo():
-            return api.bird.get('coupon/promotions')
+        def get_coupon_promo(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('coupon/promotions', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_link():
-            return api.bird.get('link')
+        def get_link(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('link', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_nearby_parking_nests(radius=5000.0):
+        def get_nearby_parking_nests(radius=5000.0, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'radius': radius }
-            return api.bird.get('nest/nearby-parking-nests', params=params)
+            return api.bird.get('nest/nearby-parking-nests', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_partner_by_id(id):
+        def get_partner_by_id(id, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'id': id }
-            return api.bird.get('partner/by-id', params)
+            return api.bird.get('partner/by-id', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_all_private_bird(offset=0, limit=100):
+        def get_all_private_bird(offset=0, limit=100, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'offset': offset, 'limit': limit }
-            return api.bird.get('private-bird/all', params)
+            return api.bird.get('private-bird/all', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_ride_pass():
-            return api.bird.get('ride-pass/ui/v2')
+        def get_ride_pass(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('ride-pass/ui/v2', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_stripe_key(api_version='2020-03-02'): # '2017-06-05' is also something
+        def get_stripe_key(api_version='2020-03-02', access_token=None, device_id=None, lat=None, lng=None): # others: api_version='2017-06-05'
             json_data = { 'api_version': api_version }
-            return api.bird.post('stripe/key', json_data=json_data)
+            return api.bird.post('stripe/key', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_user():
-            return api.bird.get('user')
+        def get_user(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('user', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_user_balance():
-            return api.bird.get('user/balance')
+        def get_user_balance(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('user/balance', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def push_user(platform='android', sandbox=False, token=None):
+        def push_user(platform='android', sandbox=False, token=None, access_token=None, device_id=None, lat=None, lng=None):
             json_data = {
                 'platform': platform,
                 'sandbox': sandbox,
                 'token': token,
             }
-            return api.bird.put('user/push', json_data=json_data)
+            return api.bird.put('user/push', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def update_user(agreed_at=None, birthdate=None, email=None, image_url=None, locale='en-US', name=None, phone=None, warehouse_id=None):
+        def update_user(agreed_at=None, birthdate=None, email=None, image_url=None, locale='en-US', name=None, phone=None, warehouse_id=None, access_token=None, device_id=None, lat=None, lng=None):
             json_data = {
                 'agreed_at': agreed_at,
                 'birthdate': birthdate,
@@ -272,105 +249,214 @@ class api:
                 'phone': phone,
                 'warehouse_id': warehouse_id,
             }
-            return api.bird.put('user/update', json_data=json_data)
+            return api.bird.put('user/update', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_user_transacion_history(offset=0, limit=50):
+        def get_user_transacion_history(offset=0, limit=50, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'offset': offset, 'limit': limit }
-            return api.bird.get('user/transaction-history', params)
+            return api.bird.get('user/transaction-history', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_user_agreement(role='RIDER', partner_id=None):
+        def get_user_agreement(role='RIDER', partner_id=None, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'role': role }
             if partner_id != None:
                 params['partner_id'] = partner_id
-            return api.bird.get('user-agreement', params)
+            return api.bird.get('user-agreement', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_merchant_by_user_id(id):
+        def get_merchant_by_user_id(id, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'id': id }
-            return api.bird.get('v1/merchant/byUserId', params)
+            return api.bird.get('v1/merchant/byUserId', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_coupon_by_coupon_id(coupon_ids=[]):
+        def get_coupon_by_coupon_id(coupon_ids=[], access_token=None, device_id=None, lat=None, lng=None):
             json_data = { 'coupon_ids': coupon_ids }
-            return api.bird.post('v1/merchant/coupon-extension/by-coupon-ids', json_data=json_data)
+            return api.bird.post('v1/merchant/coupon-extension/by-coupon-ids', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_payment_reload_config(currency='eur'):
+        def get_payment_reload_config(currency='eur', access_token=None, device_id=None, lat=None, lng=None):
             params = { 'currency': currency }
-            return api.bird.get('v1/payment/charge/reload-config', params)
+            return api.bird.get('v1/payment/charge/reload-config', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_payment_default_provider():
-            return api.bird.get('v1/payment/provider/default')
+        def get_payment_default_provider(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('v1/payment/provider/default', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_payment_provider_token(user_id, kind='braintree'):
+        def get_payment_provider_token(user_id, kind='braintree', access_token=None, device_id=None, lat=None, lng=None):
             json_data = { 'kind': kind, 'user_id': user_id }
-            return api.bird.post('v1/payment/provider/token', json_data=json_data)
+            return api.bird.post('v1/payment/provider/token', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_active_tutorial():
-            return api.bird.get('v1/tutorial/active')
+        def get_active_tutorial(access_token=None, device_id=None, lat=None, lng=None):
+            return api.bird.get('v1/tutorial/active', access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def get_payment_method_list(user_id):
+        def get_payment_method_list(user_id, access_token=None, device_id=None, lat=None, lng=None):
             params = { 'user_id': user_id }
-            return api.bird.get('v3/payment-method/list', params)
+            return api.bird.get('v3/payment-method/list', params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
-        def zendesk_login(return_to="https://help.bird.co"):
+        def zendesk_login(return_to="https://help.bird.co", access_token=None, device_id=None, lat=None, lng=None):
             json_data = { 'return_to': return_to }
-            return api.bird.post('zendesk/login', json_data=json_data)
+            return api.bird.post('zendesk/login', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
     class birdplus:
-        def get(endpoint):
-            response = api.request.get('birdplus', f'api/v1/{endpoint}')
+        def get(endpoint, access_token=None, device_id=None):
+            response = api.request.get('birdplus', f'api/v1/{endpoint}', token=access_token, device_id=device_id)
             return json.loads(response.content)
 
-        def birdplus():
-            return api.birdplus.get('bird-plus')
+        def birdplus(access_token=None, device_id=None):
+            return api.birdplus.get('bird-plus', access_token=access_token, device_id=device_id)
 
     class itemlease:
-        def get(endpoint):
-            response = api.request.get('itemlease', f'api/v1/itemlease/{endpoint}')
+        def get(endpoint, access_token=None, device_id=None):
+            response = api.request.get('itemlease', f'api/v1/itemlease/{endpoint}', token=access_token, device_id=device_id)
             return json.loads(response.content)
 
-        def active_leases():
-            return api.itemlease.get('active-leases')
+        def active_leases(access_token=None, device_id=None):
+            return api.itemlease.get('active-leases', access_token=access_token, device_id=device_id)
 
     class localization:
-        def get(endpoint, params):
-            response = api.request.get('localization', f'api/v1/localization/{endpoint}', params=params)
+        def get(endpoint, params, access_token=None, device_id=None):
+            response = api.request.get('localization', f'api/v1/localization/{endpoint}', params=params, token=access_token, device_id=device_id)
             return json.loads(response.content)
 
-        def ota_pull(project_id, modified_after=None):
+        def ota_pull(project_id, modified_after=None, access_token=None, device_id=None):
             # TODO: if modified_after == None: modified_after = current_time
             # modified_after sample: '2022-05-14T00:00:06.754+02:00'
             params = { 'bird_project_id': project_id }
             if modified_after != None:
                 params['modified_after'] = modified_after
-            return api.localization.get('ota/pull', params)
+            return api.localization.get('ota/pull', params, access_token=access_token, device_id=device_id)
 
     class rider:
-        def get(endpoint, params=None):
-            response = api.request.get('rider', f'/{endpoint}', params=params)
+        def get(endpoint, params=None, access_token=None, device_id=None):
+            response = api.request.get('rider', f'/{endpoint}', params=params, token=access_token, device_id=device_id)
             return json.loads(response.content)
 
-        def put(endpoint, params):
-            response = api.request.put('rider', f'/{endpoint}', params=params)
+        def put(endpoint, params, access_token=None, device_id=None):
+            response = api.request.put('rider', f'/{endpoint}', params=params, token=access_token, device_id=device_id)
             return json.loads(response.content)
 
-        def get_all_long_term_rental(offset=0, limit=1, active=True):
+        def get_all_long_term_rental(offset=0, limit=1, active=True, access_token=None, device_id=None):
             params = { 'offset': offset, 'limit': limit, 'active': active }
-            return api.rider.get('long-term-rental/all', params)
+            return api.rider.get('long-term-rental/all', params, access_token=access_token, device_id=device_id)
 
-        def get_active_multi_ride():
-            return api.rider.get('multi-ride/active')
+        def get_active_multi_ride(access_token=None, device_id=None):
+            return api.rider.get('multi-ride/active', access_token=access_token, device_id=device_id)
 
-        def get_active_reservation():
-            return api.rider.get('reservation/active')
+        def get_active_reservation(access_token=None, device_id=None):
+            return api.rider.get('reservation/active', access_token=access_token, device_id=device_id)
 
-        def last_ride_lock_compliance():
-            return api.rider.get('ride/last-lock-compliance')
+        def last_ride_lock_compliance(access_token=None, device_id=None):
+            return api.rider.get('ride/last-lock-compliance', access_token=access_token, device_id=device_id)
 
-        def set_acceleration_level(acceleration_level):
+        def set_acceleration_level(acceleration_level, access_token=None, device_id=None):
             if acceleration_level != 'advanced' and acceleration_level != 'intermediate':
                 print(f'Error: Unknown acceleration level {acceleration_level}.')
                 return None
             json_data = { 'acceleration_level': acceleration_level }
-            return api.rider.put('rider-profile', json_data)
+            return api.rider.put('rider-profile', json_data, access_token=access_token, device_id=device_id)
 
-        def get_beginner_mode_options():
-            return api.rider.get('rider-profile/ui/beginner-mode-options')
+        def get_beginner_mode_options(access_token=None, device_id=None):
+            return api.rider.get('rider-profile/ui/beginner-mode-options', access_token=access_token, device_id=device_id)
+
+# TODO: class Vehicle:
+# TODO:     def unlock(self):
+# TODO:     def lock(self):
+# TODO:     def ring(self):
+# TODO:     def alarm(self):
+# TODO:     def get_battery(self):
+# TODO:     def get_pos(self):
+# TODO:     def set_missing(self):
+# TODO:     def get_infos(self):
+# TODO:     def get_price(self):
+# TODO:     def is_free(self):
+
+class Session:
+    def set_tokens_filename(self, tokens_filename):
+        self.tokens_filename = tokens_filename
+
+    def save_tokens_file(self):
+        if self.tokens_filename == None or self.tokens == None:
+            return False
+        tokens_file = open(self.tokens_filename, 'w')
+        json.dump(self.tokens, tokens_file)
+        tokens_file.close()
+        return True
+
+    def load_tokens_file(self):
+        if self.tokens_filename == None:
+            return False
+        tokens_file = None
+        try:
+            tokens_file = open(self.tokens_filename, 'r')
+        except FileNotFoundError:
+            pass
+        if tokens_file != None:
+            self.tokens = json.load(tokens_file)
+            tokens_file.close()
+            return True
+        return False
+
+    def __init__(self, lat=None, lng=None, tokens_filename=None, device_id=None):
+        self.tokens = None
+        self.tokens_filename = None
+        if tokens_filename != None:
+            self.set_tokens_filename(tokens_filename)
+            self.tokens = self.load_tokens_file()
+        if device_id == None:
+            device_id = api.request.build_random_device_id()
+        self.device_id = device_id
+        self.lat = lat
+        self.lng = lng
+
+    def set_position(self, lat, lng):
+        self.lat = lat
+        self.lng = lng
+
+    def set_tokens(self, tokens):
+        self.tokens = tokens
+        self.save_tokens_file()
+
+    def register(self, email):
+        response = api.auth.get_tokens_from_email(email, device_id=self.device_id)
+        if 'validation_required' not in response:
+            print("Error: Bird: Session.register: api.auth.get_tokens_from_email returned", response)
+            return False
+        if response['validation_required'] == False:
+            self.set_tokens(response['tokens'])
+            return True
+        return False
+
+    def send_email_code(self, email):
+        response = api.auth.get_tokens_from_email(email, device_id=self.device_id)
+        if 'validation_required' not in response:
+            print("Error: Bird: Session.login_from_email: api.auth.get_tokens_from_email returned", response)
+            return False
+        if response['validation_required'] == False:
+            self.set_tokens(response['tokens'])
+            print("Warning: Bird: Session.login_from_email: You just created an account for", email)
+            return False
+        return True
+
+    def login_from_email_code(self, code):
+        response = api.auth.get_tokens_from_email_verification(code, device_id=self.device_id)
+        if 'access' not in response:
+            print("Error: Bird: Session.login_from_email_code: api.auth.get_tokens_from_email_verification returned", response)
+            return False
+        self.set_tokens(response)
+        return True
+
+    def refresh_tokens(self):
+        response = api.auth.get_tokens_from_refresh_token(self.tokens['refresh'], device_id=self.device_id)
+        if 'access' not in response:
+            print("Error: Bird: Session.refresh_session: api.auth.get_tokens_from_refresh_token returned", response)
+            return False
+        self.set_tokens(response)
+        return True
+
+    def login(self, email_code=None, tokens_filename=None):
+        if tokens_filename != None:
+            self.set_tokens_filename(tokens_filename)
+        if email_code != None:
+            tokens = self.login_from_email_code(email_code)
+            self.set_tokens(tokens)
+            return True
+        if self.load_tokens_file() == False:
+            return False
+        self.refresh_tokens()
+        return True
+
+    # TODO: def vehicles_nearby(lat, lng, radius=300.0, max_vehicles=None):
