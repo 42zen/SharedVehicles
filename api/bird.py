@@ -504,7 +504,6 @@ class Session:
             vehicles_list = vehicles_list[:max_vehicles]
         return vehicles_list
 
-sess = Session(lat=50.846885386381636, lng=4.357265272965748, tokens_filename='test.tokens')
-vehicles_list = sess.get_vehicles_nearby(radius=20.0)
+vehicles_list = Session(tokens_filename='test.tokens').get_vehicles_nearby(lat=50.84688, lng=4.35726, radius=100.0)
 print(len(vehicles_list))
 
