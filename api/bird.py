@@ -1,4 +1,3 @@
-#from pickletools import read_unicodestring1
 import requests
 import json
 import random
@@ -161,17 +160,11 @@ class api:
             return api.bird.get('area/nearby', params=params, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
         def set_bird_chirp(bird_id, alarm=False, access_token=None, device_id=None, lat=None, lng=None):
-            json_data = {
-                'alarm': alarm,
-                'bird_id': bird_id
-            }
+            json_data = { 'alarm': alarm, 'bird_id': bird_id }
             return api.bird.put('bird/chirp', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
         def set_bird_missing(bird_id, request_role='rider', access_token=None, device_id=None, lat=None, lng=None):
-            json_data = {
-                'bird_id': bird_id,
-                'request_role': request_role
-            }
+            json_data = { 'bird_id': bird_id, 'request_role': request_role }
             return api.bird.put('bird/missing', json_data=json_data, access_token=access_token, device_id=device_id, lat=lat, lng=lng)
 
         def get_bird_nearby(lat, lng, radius=5000.0, access_token=None, device_id=None):
@@ -349,27 +342,32 @@ class api:
         def last_ride_lock_compliance(access_token=None, device_id=None):
             return api.rider.get('ride/last-lock-compliance', access_token=access_token, device_id=device_id)
 
-        def set_acceleration_level(acceleration_level, access_token=None, device_id=None):
-            if acceleration_level != 'advanced' and acceleration_level != 'intermediate':
-                print(f'Error: Unknown acceleration level {acceleration_level}.')
-                return None
-            json_data = { 'acceleration_level': acceleration_level }
-            return api.rider.put('rider-profile', json_data, access_token=access_token, device_id=device_id)
-
         def get_beginner_mode_options(access_token=None, device_id=None):
             return api.rider.get('rider-profile/ui/beginner-mode-options', access_token=access_token, device_id=device_id)
 
-# TODO: class Vehicle:
-# TODO:     def unlock(self):
-# TODO:     def lock(self):
-# TODO:     def ring(self):
-# TODO:     def alarm(self):
-# TODO:     def get_battery(self):
-# TODO:     def get_pos(self):
-# TODO:     def set_missing(self):
-# TODO:     def get_infos(self):
-# TODO:     def get_price(self):
-# TODO:     def is_free(self):
+        # acceleration_level: 'advanced' or 'intermediate'
+        def set_acceleration_level(acceleration_level, access_token=None, device_id=None):
+            json_data = { 'acceleration_level': acceleration_level }
+            return api.rider.put('rider-profile', json_data, access_token=access_token, device_id=device_id)
+
+class Vehicle:
+    def __init__(self, infos, distance=None):
+        self.infos = infos
+        self.distance = distance
+        self.lat = infos['location']['latitude']
+        self.lng = infos['location']['longitude']
+        self.battery = infos['battery_level']
+        self.name = infos['code'][:3] + '__'
+
+    # TODO: def unlock(self):
+    # TODO: def lock(self):
+
+    # TODO: def ring(self):
+    # TODO: def alarm(self):
+    # TODO: def set_missing(self):
+
+    # TODO: def get_price(self):
+    # TODO: def is_free(self):
 
 class Session:
     def set_tokens_filename(self, tokens_filename):
@@ -502,8 +500,13 @@ class Session:
         vehicles_list.sort(key=self.sort_vehicles_by_distance)
         if max_vehicles != None and len(vehicles_list) > max_vehicles:
             vehicles_list = vehicles_list[:max_vehicles]
-        return vehicles_list
+        vehicles_final_list = []
+        for vehicle in vehicles_list:
+            vehicles_final_list += [Vehicle(vehicle['infos'], distance=vehicle['distance'])]
+        return vehicles_final_list
 
 vehicles_list = Session(tokens_filename='test.tokens').get_vehicles_nearby(lat=50.84688, lng=4.35726, radius=100.0)
 print(len(vehicles_list))
+for v in vehicles_list:
+    print(v.name, ':', v.distance, 'm')
 
