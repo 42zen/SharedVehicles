@@ -1,7 +1,6 @@
 import requests
 import json
-import random
-import datetime
+import random # TODO: build random (user, device, session, payment) ids
 import geopy.distance
 
 DEVICE_BRAND = 'Google'
@@ -95,7 +94,8 @@ class api:
     class node:
 
         def get(endpoint, params=None):
-            return api.request.get('node.bolt.eu', endpoint, params=params)
+            response = api.request.get('node.bolt.eu', endpoint, params=params)
+            return json.loads(response.content)
 
         def get_rental_categories(lat, lng):
             api.set_position(lat, lng)
@@ -111,14 +111,18 @@ class api:
     class taxify:
 
         def post(endpoint, data=None):
-            return api.request.post('westeu-rental.taxify.eu', endpoint, data=data)
+            response = api.request.post('westeu-rental.taxify.eu', endpoint, data=data)
+            return json.loads(response.content)
 
         def ring_vehicle(vehicle_id):
             data = f'vehicle_id={vehicle_id}'
             return api.taxify.post('client/ringVehicle', data=data)
 
     # TODO: def register()
-    # TODO: def login()
+
+    def login(tokens):
+        api.set_tokens(tokens)
+
     def sort_vehicles_by_distance(vehicle):
         return vehicle['distance']
 
@@ -225,7 +229,7 @@ class Session:
     def login(self, tokens):
         self.context.save_legacy()
         self.context.restore_session()
-        api.set_tokens(tokens)
+        api.login(tokens)
         self.context.save_session()
         self.context.restore_legacy()
         return True

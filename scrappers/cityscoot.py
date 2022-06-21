@@ -22,7 +22,7 @@ APP_CLIENT = 'okhttp/3.9.1'
 """
 Send a request to the API
 """
-def _request(endpoint, api='publicapi'):
+def request(endpoint, api='publicapi'):
     # build the headers
     headers = {
         'Host': f'{api}.{API_HOST}',
@@ -49,7 +49,7 @@ Get the zones list
 """
 def get_zones():
     # request the zones list
-    response = _request('api/v1/city?', api='api-v3')
+    response = request('api/v1/city?', api='api-v3')
 
     # check the response status code
     if response.status_code != 200:
@@ -65,7 +65,7 @@ Get the shared vehicles list
 def get_vehicles(zone_id=None):
     # TODO: if no zone_id get all the zones and all the vehicles from all zones
     # request the vehicles list
-    response = _request(f'api/scooters/public/city/{zone_id}?')
+    response = request(f'api/scooters/public/city/{zone_id}?')
 
     # check the response status code
     if response.status_code != 200:
