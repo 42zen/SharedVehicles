@@ -2,35 +2,35 @@
 
 ## Status
 
-| Name                | Android Package Name     | Supported |
-| :------------------ | :----------------------: | :-------: |
-| **Acciona**         | com.acciona.mobility.app |           |
-| **Billy**           | bike.billy               |           |
-| **Bird**            | co.bird.android          |     X     |
-| **BlueBike**        | com.motivateco.hubway    |           |
-| **Bolt**            | ee.mtakso.client         |     X     |
-| **Cambio**          | de.cambio.app            |           |
-| **Cityscoot**       | com.livebanner.cityscoot |     X     |
-| **Cooltra**         | com.mobime.ecooltra      |     X     |
-| **Dott**            | com.ridedott.rider       |           |
-| **Enjoy**           | com.eni.enjoy            |           |
-| **Felyx**           | com.felyx.android        |     X     |
-| **GoSharing**       | nl.gosharing.gourban.app |     X     |
-| **Heetch**          | com.heetch               |           |
-| **Lime**            | com.limebike             |     X     |
-| **NextBike**        | de.nextbike              |     X     |
-| **Pony**            | co.ponybikes.mercury     |     X     |
-| **Poppy**           | com.gopoppy.app          |     X     |
-| **ShareNow**        | com.car2go               |           |
-| **Superpedestrian** | com.superpedestrian.link |     X     |
-| **Swapfiet**        | com.swapfiets            |           |
-| **Tier**            | com.tier.app             |     X     |
-| **Veligo**          | com.idfmobilites.veligo  |           |
-| **Villo**           | com.altairapps.villo     |     X     |
-| **Voi**             | io.voiapp.voi            |     X     |
-| **Yego**            | com.getyugo.app          |           |
-| **ZigZag**          | it.zero11.app.zigzag     |           |
-| **Zoov**            | io.birota.zoov           |           |
+| Name                | Android Package Name     | Website               | Supported |
+| :------------------ | :----------------------: | :-------------------: | :-------: |
+| **Acciona**         | com.acciona.mobility.app | movilidad.acciona.com |           |
+| **Billy**           | bike.billy               | billy.bike            |           |
+| **Bird**            | co.bird.android          | bird.co               |     X     |
+| **BlueBike**        | com.motivateco.hubway    | blue-bike.be          |           |
+| **Bolt**            | ee.mtakso.client         | bolt.eu               |     X     |
+| **Cambio**          | de.cambio.app            | cambio.be             |           |
+| **Cityscoot**       | com.livebanner.cityscoot | cityscoot.eu          |     X     |
+| **Cooltra**         | com.mobime.ecooltra      | cooltra.com           |     X     |
+| **Dott**            | com.ridedott.rider       | ridedott.com          |           |
+| **Enjoy**           | com.eni.enjoy            | enjoy.eni.com         |           |
+| **Felyx**           | com.felyx.android        | felyx.com             |     X     |
+| **GoSharing**       | nl.gosharing.gourban.app | go-sharing.com        |     X     |
+| **Heetch**          | com.heetch               | heetch.com |          |
+| **Lime**            | com.limebike             | li.me                 |     X     |
+| **NextBike**        | de.nextbike              | nextbike.de           |     X     |
+| **Pony**            | co.ponybikes.mercury     | getapony.com          |     X     |
+| **Poppy**           | com.gopoppy.app          | poppy.be              |     X     |
+| **ShareNow**        | com.car2go               | share-now.com         |           |
+| **Superpedestrian** | com.superpedestrian.link | superpedestrian.com   |     X     |
+| **Swapfiet**        | com.swapfiets            | swapfiets.be          |           |
+| **Tier**            | com.tier.app             | tier.app              |     X     |
+| **Veligo**          | com.idfmobilites.veligo  | veligo-location.fr    |           |
+| **Villo**           | com.altairapps.villo     | villo.be              |     X     |
+| **Voi**             | io.voiapp.voi            | voiscooters.com       |     X     |
+| **Yego**            | com.getyugo.app          | rideyego.com          |           |
+| **ZigZag**          | it.zero11.app.zigzag     | zigzagsharing.com     |           |
+| **Zoov**            | io.birota.zoov           | zoov.eu               |           |
 
 ---
 
