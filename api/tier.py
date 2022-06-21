@@ -1,7 +1,5 @@
 import requests
 import json
-import random
-import datetime
 import geopy.distance
 
 DEVICE_OS_NAME = 'Android'
@@ -13,12 +11,6 @@ APP_VERSION = '4.0.43'
 class api:
 
     token = None # iPtAHWdOVLEtgkaymXoMHVVg
-    lat = None
-    lng = None
-
-    def set_position(lat, lng):
-        api.lat = lat
-        api.lng = lng
 
     def set_token(token):
         api.token = token
@@ -62,15 +54,14 @@ class api:
             return api.platform.get('v1/zone')
         
         def get_vehicles_from_position(lat, lng, radius=300):
-            api.set_position(lat, lng)
             params = {
                 'type[]': [
                     'escooter',
                     'ebicycle',
                     'emoped'
                 ],
-                'lat': api.lat,
-                'lng': api.lng,
+                'lat': lat,
+                'lng': lng,
                 'radius': radius
             }
             return api.platform.get('v2/vehicle', params=params)
@@ -110,11 +101,10 @@ class api:
         return vehicle['distance']
 
     def get_nearby_vehicles(lat, lng, radius=1000.0, max_vehicles=None, session=None):
-        api.set_position(lat, lng)
-        response = api.platform.get_vehicles_from_position(api.lat, api.lng)
+        response = api.platform.get_vehicles_from_position(lat, lng)
         vehicles_list = []
         for infos in response['data']:
-            distance = geopy.distance.geodesic((infos['attributes']['lat'], infos['attributes']['lng']), (api.lat, api.lng)).m
+            distance = geopy.distance.geodesic((infos['attributes']['lat'], infos['attributes']['lng']), (lat, lng)).m
             if distance > radius:
                 continue
             vehicles_list += [ {
@@ -160,28 +150,18 @@ class Vehicle:
 
 class context:
     def __init__(self):
-        self.lat = None
-        self.lng = None
         self.token = None
 
     def save_legacy(self):
-        self.leg_lat = api.lat
-        self.leg_lng = api.lng
         self.leg_token = api.token
 
     def restore_legacy(self):
-        api.lat = self.leg_lat
-        api.lng = self.leg_lng
         api.token = self.leg_token
 
     def save_session(self):
-        self.lat = api.lat
-        self.lng = api.lng
         self.token = api.token
 
     def restore_session(self):
-        api.lat = self.lat
-        api.lng = self.lng
         api.token = self.token
 
 class Session:
@@ -199,7 +179,7 @@ class Session:
     def get_nearby_vehicles(self, lat, lng, radius=300.0, max_vehicles=None):
         self.context.save_legacy()
         self.context.restore_session()
-        result = api.get_nearby_vehicles(lat=lat, lng=lng, radius=radius, max_vehicles=max_vehicles, session=self)
+        result = api.get_nearby_vehicles(lat, lng, radius=radius, max_vehicles=max_vehicles, session=self)
         self.context.save_session()
         self.context.restore_legacy()
         return result
