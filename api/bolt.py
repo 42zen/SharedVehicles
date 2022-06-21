@@ -97,7 +97,7 @@ class api:
         def get(endpoint, params=None):
             return api.request.get('node.bolt.eu', endpoint, params=params)
 
-        def get_nearby_vehicles(lat, lng):
+        def get_rental_categories(lat, lng):
             api.set_position(lat, lng)
             params = {
                 'lat': api.lat,
@@ -119,11 +119,113 @@ class api:
 
     # TODO: def register()
     # TODO: def login()
-    # TODO: def get_nearby_vehicles()
+    def sort_vehicles_by_distance(vehicle):
+        return vehicle['distance']
 
-# TODO: class Vehicle
-# TODO: class Session
-    # TODO: def register()
-    # TODO: def login()
-    # TODO: def get_nearby_vehicles()
+    def get_nearby_vehicles(lat, lng, radius=1000.0, max_vehicles=None, session=None):
+        api.set_position(lat, lng)
+        response = api.node.get_rental_categories(api.lat, api.lng)
+        vehicles_list = []
+        for categorie in response['data']['categories']:
+            for infos in categorie['vehicles']:
+                distance = geopy.distance.geodesic((infos['lat'], infos['lng']), (api.lat, api.lng)).m
+                if distance > radius:
+                    continue
+                vehicles_list += [ {
+                    'infos': infos,
+                    'distance': distance
+                } ]
+        vehicles_list.sort(key=api.sort_vehicles_by_distance)
+        if max_vehicles != None and len(vehicles_list) > max_vehicles:
+            vehicles_list = vehicles_list[:max_vehicles]
+        vehicles_final_list = []
+        for vehicle in vehicles_list:
+            vehicles_final_list += [Vehicle(vehicle['infos'], session=session, distance=vehicle['distance'])]
+        return vehicles_final_list
 
+class Vehicle:
+    def __init__(self, infos, session=None, distance=None):
+        self.infos = infos
+        self.distance = distance
+        self.lat = infos['lat']
+        self.lng = infos['lng']
+        self.battery = infos['charge']
+        self.name = infos['name']
+        self.session = session
+
+    def ring(self):
+        if self.session != None:
+            self.session.context.save_legacy()
+            self.session.context.restore_session()
+        response = api.taxify.ring_vehicle(self.infos['id'])
+        if self.session != None:
+            self.session.context.save_session()
+            self.session.context.restore_legacy()
+        return response
+
+    # TODO: def alarm(self):
+    # TODO: def set_missing(self):
+
+    # TODO: def get_price(self):
+    # TODO: def is_free(self):
+
+    # TODO: def unlock(self):
+    # TODO: def lock(self):
+
+class context:
+    def __init__(self):
+        self.lat = None
+        self.lng = None
+        self.token = None
+        self.user_id = None
+        self.device_id = None
+        self.session_id = None
+        self.payment_id = None
+
+    def save_legacy(self):
+        self.leg_lat = api.lat
+        self.leg_lng = api.lng
+        self.leg_token = api.token
+        self.leg_user_id = api.user_id
+        self.leg_device_id = api.device_id
+        self.leg_session_id = api.session_id
+        self.leg_payment_id = api.payment_id
+
+    def restore_legacy(self):
+        api.lat = self.leg_lat
+        api.lng = self.leg_lng
+        api.token = self.leg_token
+        api.user_id = self.leg_user_id
+        api.device_id = self.leg_device_id
+        api.session_id = self.leg_session_id
+        api.payment_id = self.leg_payment_id
+
+    def save_session(self):
+        self.lat = api.lat
+        self.lng = api.lng
+        self.token = api.token
+        self.user_id = api.user_id
+        self.device_id = api.device_id
+        self.session_id = api.session_id
+        self.payment_id = api.payment_id
+
+    def restore_session(self):
+        api.lat = self.lat
+        api.lng = self.lng
+        api.token = self.token
+        api.user_id = self.user_id
+        api.device_id = self.device_id
+        api.session_id = self.session_id
+        api.payment_id = self.payment_id
+
+class Session:
+    def __init__(self):
+        self.context = context()
+
+    def get_nearby_vehicles(self, lat, lng, radius=300.0, max_vehicles=None):
+        self.context.save_legacy()
+        self.context.restore_session()
+        result = api.get_nearby_vehicles(lat=lat, lng=lng, radius=radius, max_vehicles=max_vehicles, session=self)
+        self.context.save_session()
+        self.context.restore_legacy()
+        return result

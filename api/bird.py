@@ -449,7 +449,7 @@ class api:
     def sort_vehicles_by_distance(vehicle):
         return vehicle['distance']
 
-    def get_nearby_vehicles(lat, lng, radius=300.0, max_vehicles=None, session=None):
+    def get_nearby_vehicles(lat, lng, radius=1000.0, max_vehicles=None, session=None):
         api.set_position(lat, lng)
         response = api.bird.get_bird_nearby(api.lat, api.lng)
         if 'birds' not in response:
@@ -483,7 +483,7 @@ class Vehicle:
         self.lat = infos['location']['latitude']
         self.lng = infos['location']['longitude']
         self.battery = infos['battery_level']
-        self.name = infos['code'][:3] + '__'
+        self.name = infos['code'][:3] + 'XX'
         self.session = session
 
     def ring(self):
