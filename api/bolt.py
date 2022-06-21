@@ -18,7 +18,7 @@ class api:
 
     lat = None
     lng = None
-    token = None      # {'node.bolt.eu':'Basic KzMzNjk1NzkwMjU4OjVjMGI5NzIzLTkxM2EtNDJiNi1hNDJmLTYzNTZmNzY3NzYyZg==', 'westeu-rental.taxify.eu':'Basic KzMzNjk1NzkwMjU4OjFiZWY3ZDhjLWUwNTctNGJmNi1hYzZkLTkyNWQwNTA2YmUzZQ=='}
+    tokens = None      # {'node.bolt.eu':'Basic KzMzNjk1NzkwMjU4OjVjMGI5NzIzLTkxM2EtNDJiNi1hNDJmLTYzNTZmNzY3NzYyZg==', 'westeu-rental.taxify.eu':'Basic KzMzNjk1NzkwMjU4OjFiZWY3ZDhjLWUwNTctNGJmNi1hYzZkLTkyNWQwNTA2YmUzZQ=='}
     user_id = None    # 118141060
     device_id = None  # cTP5F0PBQIC2jKsSavm-px
     session_id = None # 118141060u1653238406480
@@ -28,8 +28,8 @@ class api:
         api.lat = lat
         api.lng = lng
 
-    def set_token(token):
-        api.token = token
+    def set_tokens(tokens):
+        api.tokens = tokens
 
     def set_user_id(user_id):
         api.user_id = user_id
@@ -48,7 +48,7 @@ class api:
         def build_headers(api_name):
             headers = {
                 'Host': api_name,
-                'Authorization': api.token[api_name],
+                'Authorization': api.tokens[api_name],
                 'User-Agent': APP_CLIENT
             }
             if api_name == 'westeu-rental.taxify.eu':
@@ -176,7 +176,7 @@ class context:
     def __init__(self):
         self.lat = None
         self.lng = None
-        self.token = None
+        self.tokens = None
         self.user_id = None
         self.device_id = None
         self.session_id = None
@@ -185,7 +185,7 @@ class context:
     def save_legacy(self):
         self.leg_lat = api.lat
         self.leg_lng = api.lng
-        self.leg_token = api.token
+        self.leg_tokens = api.tokens
         self.leg_user_id = api.user_id
         self.leg_device_id = api.device_id
         self.leg_session_id = api.session_id
@@ -194,7 +194,7 @@ class context:
     def restore_legacy(self):
         api.lat = self.leg_lat
         api.lng = self.leg_lng
-        api.token = self.leg_token
+        api.tokens = self.leg_tokens
         api.user_id = self.leg_user_id
         api.device_id = self.leg_device_id
         api.session_id = self.leg_session_id
@@ -203,7 +203,7 @@ class context:
     def save_session(self):
         self.lat = api.lat
         self.lng = api.lng
-        self.token = api.token
+        self.tokens = api.tokens
         self.user_id = api.user_id
         self.device_id = api.device_id
         self.session_id = api.session_id
@@ -212,7 +212,7 @@ class context:
     def restore_session(self):
         api.lat = self.lat
         api.lng = self.lng
-        api.token = self.token
+        api.tokens = self.tokens
         api.user_id = self.user_id
         api.device_id = self.device_id
         api.session_id = self.session_id
@@ -221,6 +221,14 @@ class context:
 class Session:
     def __init__(self):
         self.context = context()
+
+    def login(self, tokens):
+        self.context.save_legacy()
+        self.context.restore_session()
+        api.set_tokens(tokens)
+        self.context.save_session()
+        self.context.restore_legacy()
+        return True
 
     def get_nearby_vehicles(self, lat, lng, radius=300.0, max_vehicles=None):
         self.context.save_legacy()
